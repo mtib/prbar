@@ -6,8 +6,6 @@ The GitHub Slack integration stops scaling once your team is on enough repos: ev
 request becomes a message, and the standing queue is invisible. `prbar` inverts that — the
 queue lives in the menu bar, and you get exactly one notification per PR that newly needs you.
 
-<!-- screenshot -->
-
 ## What it shows
 
 Every 60 seconds (only while the machine has a route to the internet) it runs two GitHub

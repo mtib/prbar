@@ -20,6 +20,8 @@ struct PrbarApp: App {
     }
 }
 
+/// The status item itself, which SwiftUI instantiates at launch — so this is where polling is
+/// kicked off. The panel view only exists once the menu has been opened at least once.
 private struct MenuBarLabel: View {
     let model: AppModel
 
@@ -30,5 +32,6 @@ private struct MenuBarLabel: View {
                 Text("\(model.count(.direct))")
             }
         }
+        .task { model.start() }
     }
 }
