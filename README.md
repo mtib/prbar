@@ -20,6 +20,9 @@ searches and splits the results into three tabs, each with a live count:
 Both searches use `review:required`, so a PR drops off once it no longer blocks the merge.
 PRs you authored yourself are filtered out.
 
+The menu bar itself reads `<direct>+<team>` — drafts are deliberately left out of that total,
+since they aren't waiting on you yet.
+
 Clicking any row opens the PR in your default browser.
 
 ## Notifications
