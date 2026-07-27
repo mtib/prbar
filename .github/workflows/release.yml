@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to create the release for (e.g. v0.1.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve version
+        id: version
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build app bundle
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./scripts/build-app.sh
+
+      # ditto, not zip: it preserves the bundle's symlinks and extended attributes, which a
+      # plain `zip -r` mangles.
+      - name: Package
+        run: ditto -c -k --sequesterRsrc --keepParent build/prbar.app prbar.zip
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes=$(cat <<'EOF'
+          Menu bar app for GitHub PRs awaiting your review.
+
+          ```sh
+          brew tap mtib/tap
+          brew install --cask --no-quarantine mtib/tap/prbar
+          ```
+
+          `--no-quarantine` is required: the build is ad-hoc signed, not notarized.
+          EOF
+          )
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            gh release upload "${{ steps.version.outputs.tag }}" prbar.zip --clobber
+          else
+            gh release create "${{ steps.version.outputs.tag }}" prbar.zip \
+              --title "${{ steps.version.outputs.tag }}" \
+              --notes "$notes" \
+              --latest
+          fi

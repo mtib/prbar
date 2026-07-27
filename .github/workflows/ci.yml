@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Build app bundle
+        env:
+          VERSION: 0.0.0-ci
+        run: ./scripts/build-app.sh
+
+      - name: Verify bundle
+        run: |
+          codesign --verify --verbose=2 build/prbar.app
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' build/prbar.app/Contents/Info.plist
+          test -x build/prbar.app/Contents/MacOS/prbar
