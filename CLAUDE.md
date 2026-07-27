@@ -24,11 +24,15 @@ VERSION=0.1.0 ./scripts/build-app.sh && open build/prbar.app
 Push a `v*` tag. `.github/workflows/release.yml` builds on `macos-26`, packages with `ditto`
 (not `zip` — it preserves bundle metadata), and publishes `prbar.zip`.
 
-The Homebrew cask at `mtib/homebrew-tap` `Casks/prbar.rb` points at
-`releases/latest/download/prbar.zip` with `version :latest` / `sha256 :no_check`, so **the tap
-needs no update per release**. `brew style` flags that zip URL (`Cask/Url` wants tarballs);
-that cop is wrong for `.app` release assets and Homebrew forbids inline rubocop directives, so
-the single warning is expected.
+The `update-tap` job then rewrites `Casks/prbar.rb` in `mtib/homebrew-tap` from
+`packaging/prbar.rb.tmpl`, substituting the version and the packaged zip's sha256. **Edit the
+template, never the tap copy** — the next release overwrites it. It needs the `TAP_TOKEN`
+secret on this repo (a PAT with write access to the tap), mirroring how `mtib/dhl` does it;
+`github.token` cannot push cross-repo.
+
+The cask carries a real `version` + `sha256` (not `version :latest`), which is what lets
+`brew upgrade --cask prbar` and `brew livecheck` detect new releases. The `livecheck` block uses
+`strategy :github_latest`.
 
 Releases are ad-hoc signed, not notarized, so a brew-installed copy is Gatekeeper-rejected
 until `xattr -dr com.apple.quarantine /Applications/prbar.app` is run. Homebrew 6 removed the

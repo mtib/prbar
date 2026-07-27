@@ -15,6 +15,10 @@ permissions:
 jobs:
   release:
     runs-on: macos-26
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      sha256: ${{ steps.package.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v5
 
@@ -33,7 +37,10 @@ jobs:
       # ditto, not zip: it preserves the bundle's symlinks and extended attributes, which a
       # plain `zip -r` mangles.
       - name: Package
-        run: ditto -c -k --sequesterRsrc --keepParent build/prbar.app prbar.zip
+        id: package
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent build/prbar.app prbar.zip
+          echo "sha256=$(shasum -a 256 prbar.zip | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Publish release
         env:
@@ -59,3 +66,36 @@ jobs:
               --notes "$notes" \
               --latest
           fi
+
+  update-tap:
+    name: Update Homebrew tap
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Checkout tap repo
+        uses: actions/checkout@v5
+        with:
+          repository: mtib/homebrew-tap
+          token: ${{ secrets.TAP_TOKEN }}
+          path: tap
+
+      # The cask is rendered from a template rather than a heredoc so the backticks and #{}
+      # interpolation in it survive untouched.
+      - name: Render cask
+        run: |
+          sed -e "s/@@VERSION@@/${{ needs.release.outputs.version }}/" \
+              -e "s/@@SHA256@@/${{ needs.release.outputs.sha256 }}/" \
+              packaging/prbar.rb.tmpl > tap/Casks/prbar.rb
+          grep -q '@@' tap/Casks/prbar.rb && { echo "unsubstituted placeholder left"; exit 1; } || true
+          cat tap/Casks/prbar.rb
+
+      - name: Commit and push cask
+        run: |
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/prbar.rb
+          git diff --cached --quiet || git commit -m "prbar: update to ${{ needs.release.outputs.tag }}"
+          git push

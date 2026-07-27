@@ -42,8 +42,16 @@ xattr -dr com.apple.quarantine /Applications/prbar.app
 open -a /Applications/prbar.app
 ```
 
-The cask tracks the latest release, so `brew upgrade --cask prbar` always pulls the newest
-build without the tap needing an update.
+To upgrade later:
+
+```sh
+brew upgrade --cask prbar
+xattr -dr com.apple.quarantine /Applications/prbar.app
+```
+
+The cask carries a real version and checksum, so Homebrew knows when a newer release exists and
+`brew upgrade` does the right thing. Releasing a tag updates the cask in `mtib/homebrew-tap`
+automatically (see `.github/workflows/release.yml` and `packaging/prbar.rb.tmpl`).
 
 The `xattr` step is required: releases are ad-hoc signed rather than notarized (there's no
 Apple Developer account behind this), so Gatekeeper refuses to launch the app while the
