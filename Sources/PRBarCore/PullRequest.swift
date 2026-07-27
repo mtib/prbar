@@ -14,6 +14,9 @@ public struct PullRequest: Sendable, Hashable, Identifiable {
 
     public var id: String { "\(repo)#\(number)" }
 
+    /// Repo name without the owner — what fits in a notification banner.
+    public var service: String { repo.split(separator: "/").last.map(String.init) ?? repo }
+
     public init(
         repo: String,
         number: Int,

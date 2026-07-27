@@ -44,10 +44,11 @@ jobs:
 
           ```sh
           brew tap mtib/tap
-          brew install --cask --no-quarantine mtib/tap/prbar
+          brew install --cask mtib/tap/prbar
+          xattr -dr com.apple.quarantine /Applications/prbar.app
           ```
 
-          `--no-quarantine` is required: the build is ad-hoc signed, not notarized.
+          The `xattr` step is required: the build is ad-hoc signed, not notarized.
           EOF
           )
           if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then

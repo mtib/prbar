@@ -37,18 +37,26 @@ Seen PRs are tracked in `~/Library/Application Support/prbar/notified.json`.
 
 ```sh
 brew tap mtib/tap
-brew install --cask --no-quarantine mtib/tap/prbar
+brew install --cask mtib/tap/prbar
+xattr -dr com.apple.quarantine /Applications/prbar.app
+open -a /Applications/prbar.app
 ```
 
 The cask tracks the latest release, so `brew upgrade --cask prbar` always pulls the newest
 build without the tap needing an update.
 
-`--no-quarantine` is required: releases are ad-hoc signed rather than notarized (no Apple
-Developer account behind this), so Gatekeeper would otherwise refuse to launch the app. If
-you'd rather not pass that flag, [build from source](#build-from-source) instead.
+The `xattr` step is required: releases are ad-hoc signed rather than notarized (there's no
+Apple Developer account behind this), so Gatekeeper refuses to launch the app while the
+download's quarantine flag is set. Homebrew 6 dropped the `--no-quarantine` install flag; it
+now only honours `HOMEBREW_CASK_OPTS=--no-quarantine`, and that doesn't help once the download
+is cached, so clearing the attribute directly is the reliable route. Prefer to avoid it
+entirely? [Build from source](#build-from-source) — nothing you compile locally is quarantined.
 
-Then launch it once (`open -a prbar`) and allow notifications when macOS asks. To have it
-start at login, add it under System Settings → General → Login Items.
+Allow notifications when macOS asks. To have it start at login, add it under System Settings →
+General → Login Items.
+
+Note `open -a prbar` may resolve to a different copy if you also have a source build around;
+pass the full path when you care which one starts.
 
 ## Authentication
 

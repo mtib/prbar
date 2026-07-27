@@ -1,6 +1,10 @@
 import AppKit
+import OSLog
 import PRBarCore
 import UserNotifications
+
+/// `log stream --predicate 'subsystem == "dev.mtib.prbar"'` shows exactly what was posted.
+let log = Logger(subsystem: "dev.mtib.prbar", category: "notifications")
 
 enum NotificationPayload {
     static let urlKey = "prURL"
@@ -20,18 +24,27 @@ struct Notifier {
         _ = try? await center.requestAuthorization(options: [.alert, .sound])
     }
 
-    func post(_ pullRequest: PullRequest, isDirect: Bool) async {
-        guard let center else { return }
+    func post(_ pullRequest: PullRequest) async {
+        guard let center else {
+            log.error("no bundle identifier — notification suppressed for \(pullRequest.id)")
+            return
+        }
+
         let content = UNMutableNotificationContent()
-        content.title = "\(pullRequest.repo) #\(pullRequest.number)"
-        content.subtitle = isDirect ? "Review requested from you" : "Team review requested"
-        content.body = pullRequest.title
+        content.title = "\(pullRequest.service)#\(pullRequest.number) \(pullRequest.author)"
+        content.body = pullRequest.title.isEmpty ? pullRequest.url.absoluteString : pullRequest.title
         content.userInfo = [NotificationPayload.urlKey: pullRequest.url.absoluteString]
         content.sound = .default
+        content.threadIdentifier = pullRequest.repo
 
-        try? await center.add(
-            UNNotificationRequest(identifier: pullRequest.id, content: content, trigger: nil)
-        )
+        do {
+            try await center.add(
+                UNNotificationRequest(identifier: pullRequest.id, content: content, trigger: nil)
+            )
+            log.info("posted \(content.title, privacy: .public) / \(content.body, privacy: .public)")
+        } catch {
+            log.error("post failed for \(pullRequest.id): \(error.localizedDescription)")
+        }
     }
 }
 

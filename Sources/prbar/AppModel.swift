@@ -80,9 +80,8 @@ final class AppModel {
 
     private func announce(_ queue: ReviewQueue) async {
         let plan = NotificationPlanner.plan(queue: queue, notified: notified)
-        let directIDs = Set(queue.direct.map(\.id))
         for pullRequest in plan.toNotify {
-            await notifier.post(pullRequest, isDirect: directIDs.contains(pullRequest.id))
+            await notifier.post(pullRequest)
         }
         notified = plan.notified
         try? stateStore.save(plan.notified)
