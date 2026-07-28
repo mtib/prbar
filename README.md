@@ -40,9 +40,14 @@ Seen PRs are tracked in `~/Library/Application Support/prbar/notified.json`.
 
 ```sh
 brew tap mtib/tap
+brew trust --cask mtib/tap/prbar
 brew install --cask mtib/tap/prbar
 open -a prbar
 ```
+
+The `brew trust` line is not optional on Homebrew 6+: it **silently ignores casks from
+untrusted third-party taps**, so without it the install looks like the cask doesn't exist. You
+only need it once per machine.
 
 Upgrading later is just `brew upgrade --cask prbar` — the cask carries a real version and
 checksum, so Homebrew knows when a newer release exists. Releasing a tag updates the cask in

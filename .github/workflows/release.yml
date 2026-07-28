@@ -51,11 +51,14 @@ jobs:
 
           ```sh
           brew tap mtib/tap
+          brew trust --cask mtib/tap/prbar
           brew install --cask mtib/tap/prbar
-          xattr -dr com.apple.quarantine /Applications/prbar.app
+          open -a prbar
           ```
 
-          The `xattr` step is required: the build is ad-hoc signed, not notarized.
+          `brew trust` is required once per machine — Homebrew 6+ ignores casks from untrusted
+          third-party taps. The build is ad-hoc signed rather than notarized, so the cask clears
+          its own quarantine flag on install.
           EOF
           )
           if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
