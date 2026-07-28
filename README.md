@@ -41,33 +41,35 @@ Seen PRs are tracked in `~/Library/Application Support/prbar/notified.json`.
 ```sh
 brew tap mtib/tap
 brew install --cask mtib/tap/prbar
-xattr -dr com.apple.quarantine /Applications/prbar.app
-open -a /Applications/prbar.app
+open -a prbar
 ```
 
-To upgrade later:
-
-```sh
-brew upgrade --cask prbar
-xattr -dr com.apple.quarantine /Applications/prbar.app
-```
-
-The cask carries a real version and checksum, so Homebrew knows when a newer release exists and
-`brew upgrade` does the right thing. Releasing a tag updates the cask in `mtib/homebrew-tap`
-automatically (see `.github/workflows/release.yml` and `packaging/prbar.rb.tmpl`).
-
-The `xattr` step is required: releases are ad-hoc signed rather than notarized (there's no
-Apple Developer account behind this), so Gatekeeper refuses to launch the app while the
-download's quarantine flag is set. Homebrew 6 dropped the `--no-quarantine` install flag; it
-now only honours `HOMEBREW_CASK_OPTS=--no-quarantine`, and that doesn't help once the download
-is cached, so clearing the attribute directly is the reliable route. Prefer to avoid it
-entirely? [Build from source](#build-from-source) — nothing you compile locally is quarantined.
+Upgrading later is just `brew upgrade --cask prbar` — the cask carries a real version and
+checksum, so Homebrew knows when a newer release exists. Releasing a tag updates the cask in
+`mtib/homebrew-tap` automatically (see `.github/workflows/release.yml` and
+`packaging/prbar.rb.tmpl`).
 
 Allow notifications when macOS asks. To have it start at login, add it under System Settings →
 General → Login Items.
 
-Note `open -a prbar` may resolve to a different copy if you also have a source build around;
-pass the full path when you care which one starts.
+### Why Gatekeeper doesn't complain
+
+Releases are **ad-hoc signed, not notarized** — there's no Apple Developer account behind this
+project. macOS would normally refuse to launch such an app while the download carries a
+quarantine flag, which is why the cask clears that flag in a `postflight` block. The trust
+boundary is the tap you added, not Apple's notary service; if that isn't a trade you want to
+make, [build from source](#build-from-source) instead — nothing you compile locally is
+quarantined.
+
+If you grab `prbar.zip` from the releases page by hand rather than through brew, you'll need to
+clear it yourself:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/prbar.app
+```
+
+(`open -a prbar` resolves through LaunchServices and may pick a source build if you have one
+around; pass the full path when it matters which copy starts.)
 
 ## Authentication
 

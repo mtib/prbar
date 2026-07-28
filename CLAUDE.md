@@ -34,11 +34,19 @@ The cask carries a real `version` + `sha256` (not `version :latest`), which is w
 `brew upgrade --cask prbar` and `brew livecheck` detect new releases. The `livecheck` block uses
 `strategy :github_latest`.
 
-Releases are ad-hoc signed, not notarized, so a brew-installed copy is Gatekeeper-rejected
-until `xattr -dr com.apple.quarantine /Applications/prbar.app` is run. Homebrew 6 removed the
-`--no-quarantine` **install flag** (it only survives via `HOMEBREW_CASK_OPTS`, and that has no
-effect once the download is cached), so don't document that flag — verified 2026-07-27 against
-Homebrew 6.0.12.
+Releases are ad-hoc signed, not notarized, so a downloaded copy is Gatekeeper-rejected while it
+carries a quarantine flag. **The cask clears it in a `postflight` block**, which is what keeps
+`brew install` a single step — a deliberate trade Markus approved after a colleague hit the
+"macOS doesn't trust it" wall. Don't reintroduce manual `xattr` instructions for the brew path;
+they're only relevant to hand-downloaded zips.
+
+Homebrew 6 removed the `--no-quarantine` **install flag** (it only survives via
+`HOMEBREW_CASK_OPTS`, and that has no effect once the download is cached), so don't document
+that flag — verified 2026-07-27 against Homebrew 6.0.12.
+
+The real fix is notarization, which needs an Apple Developer Program membership ($99/yr); this
+machine has **no** codesigning identity (`security find-identity -v -p codesigning` → 0 valid),
+so it isn't currently possible.
 
 Beware that `open -a prbar` resolves through LaunchServices and may start a source build in
 `~/Code/prbar/build` instead of `/Applications`. Use full paths when verifying.
