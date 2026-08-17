@@ -7,6 +7,7 @@ import PRBarCore
 final class AppSettings {
     private enum Key {
         static let authMode = "authMode"
+        static let filter = "filter"
     }
 
     private let defaults: UserDefaults
@@ -14,6 +15,11 @@ final class AppSettings {
 
     var authMode: AuthMode {
         didSet { defaults.set(authMode.rawValue, forKey: Key.authMode) }
+    }
+
+    /// Extra search qualifiers appended to both review searches. Empty means unfiltered.
+    var filter: String {
+        didSet { defaults.set(filter, forKey: Key.filter) }
     }
 
     /// Mirrors the Keychain so views can bind to it without hitting the Keychain per keystroke.
@@ -24,6 +30,7 @@ final class AppSettings {
         self.tokenStore = tokenStore
         self.authMode = defaults.string(forKey: Key.authMode)
             .flatMap(AuthMode.init(rawValue:)) ?? .automatic
+        self.filter = defaults.string(forKey: Key.filter) ?? ""
         self.hasToken = tokenStore.load() != nil
     }
 
@@ -40,6 +47,6 @@ final class AppSettings {
     }
 
     func resolveSource() throws -> any PullRequestSource {
-        try SourceResolver.resolve(mode: authMode, token: token())
+        try SourceResolver.resolve(mode: authMode, token: token(), filter: filter)
     }
 }

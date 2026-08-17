@@ -50,19 +50,25 @@ public enum SourceResolutionError: Error, LocalizedError, Sendable {
 public enum SourceResolver {
     /// Picks a source for `mode`. `automatic` prefers a stored token because it needs no
     /// external binary, then falls back to whatever `gh` is already authenticated as.
-    public static func resolve(mode: AuthMode, token: String?) throws -> any PullRequestSource {
+    ///
+    /// `filter` is passed to the source unchanged and lands in both review searches.
+    public static func resolve(
+        mode: AuthMode,
+        token: String?,
+        filter: String = ""
+    ) throws -> any PullRequestSource {
         let token = token?.trimmingCharacters(in: .whitespacesAndNewlines)
         let usableToken = (token?.isEmpty == false) ? token : nil
 
         switch mode {
         case .token:
             guard let usableToken else { throw SourceResolutionError.noTokenStored }
-            return GitHubTokenClient(token: usableToken)
+            return GitHubTokenClient(token: usableToken, filter: filter)
         case .ghCLI:
-            do { return try GitHubClient.locate() } catch { throw SourceResolutionError.ghUnavailable(error) }
+            do { return try GitHubClient.locate(filter: filter) } catch { throw SourceResolutionError.ghUnavailable(error) }
         case .automatic:
-            if let usableToken { return GitHubTokenClient(token: usableToken) }
-            do { return try GitHubClient.locate() } catch { throw SourceResolutionError.ghUnavailable(error) }
+            if let usableToken { return GitHubTokenClient(token: usableToken, filter: filter) }
+            do { return try GitHubClient.locate(filter: filter) } catch { throw SourceResolutionError.ghUnavailable(error) }
         }
     }
 }

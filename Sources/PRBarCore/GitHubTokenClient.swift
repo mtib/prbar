@@ -27,10 +27,12 @@ public struct GitHubTokenClient: PullRequestSource {
 
     private let token: String
     private let session: URLSession
+    private let filter: String
 
-    public init(token: String, session: URLSession = .shared) {
+    public init(token: String, session: URLSession = .shared, filter: String = "") {
         self.token = token
         self.session = session
+        self.filter = filter
     }
 
     public var describedAuth: String { "access token (…\(token.suffix(4)))" }
@@ -89,8 +91,8 @@ public struct GitHubTokenClient: PullRequestSource {
 
     public func fetchQueue() async throws -> ReviewQueueSnapshot {
         let user = try await currentUser()
-        async let direct = search(ReviewQuery.direct(user: user))
-        async let requested = search(ReviewQuery.requested(user: user))
+        async let direct = search(ReviewQuery.direct(user: user, filter: filter))
+        async let requested = search(ReviewQuery.requested(user: user, filter: filter))
         return ReviewQueueSnapshot(
             user: user,
             queue: ReviewQueue.classify(

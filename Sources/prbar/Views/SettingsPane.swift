@@ -50,6 +50,18 @@ struct SettingsPane: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Search filter") {
+                TextField("-author:app/dependabot", text: $settings.filter)
+                    .onSubmit { model.refresh() }
+                Text(
+                    "Extra qualifiers, appended to both review searches. Bot authors need the "
+                    + "app/ prefix: -author:app/dependabot excludes them, -author:dependabot "
+                    + "matches nothing."
+                )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             if let status {
                 Section {
                     switch status {

@@ -25,6 +25,23 @@ since they aren't waiting on you yet.
 
 Clicking any row opens the PR in your default browser.
 
+## Filtering the queue
+
+Settings has a **Search filter** field whose contents are appended verbatim to both searches,
+so any [GitHub search qualifier](https://docs.github.com/search-github/searching-on-github/searching-issues-and-pull-requests)
+works. It exists mainly to get dependency bots out of the queue:
+
+```
+-author:app/dependabot -author:app/renovate
+```
+
+Note the `app/` prefix — bot authors only match with it. Plain `-author:dependabot` silently
+excludes nothing, because the account GitHub records is the app, not a user of that name.
+
+A filtered PR is invisible to the whole pipeline, notifications included. A malformed qualifier
+makes GitHub answer `422`, which shows up as the panel's error line; **Test connection** in
+Settings is the quickest way to check a filter before trusting it.
+
 ## Notifications
 
 - One notification per PR, the first time it appears in **Direct** or **Team**.

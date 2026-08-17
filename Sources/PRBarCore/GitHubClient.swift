@@ -23,17 +23,26 @@ public struct GitHubClient: PullRequestSource {
 
     private let ghPath: String
     private let runner: any CommandRunner
+    private let filter: String
 
-    public init(ghPath: String, runner: any CommandRunner = ProcessRunner()) {
+    public init(
+        ghPath: String,
+        runner: any CommandRunner = ProcessRunner(),
+        filter: String = ""
+    ) {
         self.ghPath = ghPath
         self.runner = runner
+        self.filter = filter
     }
 
-    public static func locate(runner: any CommandRunner = ProcessRunner()) throws -> GitHubClient {
+    public static func locate(
+        runner: any CommandRunner = ProcessRunner(),
+        filter: String = ""
+    ) throws -> GitHubClient {
         guard let path = candidatePaths.first(where: {
             FileManager.default.isExecutableFile(atPath: $0)
         }) else { throw Failure.ghNotFound(candidatePaths) }
-        return GitHubClient(ghPath: path, runner: runner)
+        return GitHubClient(ghPath: path, runner: runner, filter: filter)
     }
 
     public var describedAuth: String { "gh CLI (\(ghPath))" }
@@ -55,8 +64,8 @@ public struct GitHubClient: PullRequestSource {
 
     public func fetchQueue() async throws -> ReviewQueueSnapshot {
         let user = try await currentUser()
-        async let direct = search(ReviewQuery.direct(user: user))
-        async let requested = search(ReviewQuery.requested(user: user))
+        async let direct = search(ReviewQuery.direct(user: user, filter: filter))
+        async let requested = search(ReviewQuery.requested(user: user, filter: filter))
         return ReviewQueueSnapshot(
             user: user,
             queue: ReviewQueue.classify(
