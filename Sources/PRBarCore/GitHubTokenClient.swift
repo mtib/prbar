@@ -58,6 +58,23 @@ public struct GitHubTokenClient: PullRequestSource {
         return (data, http)
     }
 
+    public func graphQL(document: String, variables: [String: String]) async throws -> Data {
+        var request = request(Self.apiRoot.appending(path: "graphql"))
+        request.httpMethod = "POST"
+        request.httpBody = try JSONEncoder().encode(GraphQLRequest(query: document, variables: variables))
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIFailure(statusCode: -1, body: "non-HTTP response")
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            throw APIFailure(
+                statusCode: http.statusCode,
+                body: String(data: data, encoding: .utf8) ?? ""
+            )
+        }
+        return data
+    }
+
     public func currentUser() async throws -> String {
         struct Me: Decodable { let login: String }
         let (data, _) = try await get(Self.apiRoot.appending(path: "user"))
@@ -117,4 +134,10 @@ public struct GitHubTokenClient: PullRequestSource {
         }
         return nil
     }
+}
+
+
+private struct GraphQLRequest: Encodable {
+    let query: String
+    let variables: [String: String]
 }

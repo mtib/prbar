@@ -53,6 +53,14 @@ public struct GitHubClient: PullRequestSource {
         return pages.flatMap(\.items).map(\.pullRequest)
     }
 
+    public func graphQL(document: String, variables: [String: String]) async throws -> Data {
+        var arguments = ["api", "graphql", "-f", "query=\(document)"]
+        for (key, value) in variables.sorted(by: { $0.key < $1.key }) {
+            arguments += ["-f", "\(key)=\(value)"]
+        }
+        return Data(try await runner.run(ghPath, arguments: arguments).utf8)
+    }
+
     public func fetchQueue() async throws -> ReviewQueueSnapshot {
         let user = try await currentUser()
         async let direct = search(ReviewQuery.direct(user: user))

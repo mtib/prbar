@@ -7,9 +7,12 @@ import PRBarCore
 @Observable
 final class AppModel {
     static let pollInterval: Duration = .seconds(60)
+    /// The histogram's longest span, so one fetch feeds both the 7- and 30-day views.
+    static let activityWindow = 30
 
     var selectedBucket: ReviewBucket = .direct
     private(set) var queue = ReviewQueue.empty
+    private(set) var reviewActivity = ReviewActivity.empty
     private(set) var user: String?
     private(set) var lastRefresh: Date?
     private(set) var lastError: String?
@@ -33,6 +36,11 @@ final class AppModel {
     var isOnline: Bool { connectivity.isOnline }
 
     func count(_ bucket: ReviewBucket) -> Int { queue[bucket].count }
+
+    /// Distinct PRs reviewed today, in the user's own calendar.
+    var reviewedToday: Int { reviewActivity.distinctPullRequests(on: .now) }
+
+    func dailyCounts(days: Int) -> [DayCount] { reviewActivity.dailyCounts(days: days) }
 
     func start() {
         guard pollTask == nil else { return }
@@ -73,6 +81,7 @@ final class AppModel {
             lastRefresh = .now
             lastError = nil
             await announce(snapshot.queue)
+            await refreshActivity(from: source, user: snapshot.user)
         } catch {
             lastError = error.localizedDescription
         }
@@ -85,6 +94,18 @@ final class AppModel {
         }
         notified = plan.notified
         try? stateStore.save(plan.notified)
+    }
+
+    /// Review history is cosmetic: a failure here must not blank the queue or raise an error
+    /// banner, so it is fetched after the queue and swallowed.
+    private func refreshActivity(from source: any PullRequestSource, user: String) async {
+        let start = Calendar.current.startOfDay(for: .now)
+        guard let since = Calendar.current.date(
+            byAdding: .day, value: -(Self.activityWindow - 1), to: start
+        ) else { return }
+        if let activity = try? await source.fetchReviewActivity(user: user, since: since) {
+            reviewActivity = activity
+        }
     }
 
     func open(_ pullRequest: PullRequest) {

@@ -4,10 +4,12 @@ import SwiftUI
 struct PanelView: View {
     @Bindable var model: AppModel
 
+    @State private var showingActivity = false
+
     var body: some View {
         VStack(spacing: 0) {
             header
-            bucketPicker
+            bucketRow
             Divider()
             list
             Divider()
@@ -43,20 +45,49 @@ struct PanelView: View {
         .padding(.bottom, 8)
     }
 
-    private var bucketPicker: some View {
-        Picker("", selection: $model.selectedBucket) {
-            ForEach(ReviewBucket.allCases) { bucket in
-                Text("\(bucket.title) (\(model.count(bucket)))").tag(bucket)
+    private var bucketRow: some View {
+        HStack(spacing: 8) {
+            Picker("", selection: $model.selectedBucket) {
+                ForEach(ReviewBucket.allCases) { bucket in
+                    Text("\(bucket.title) (\(model.count(bucket)))").tag(bucket)
+                }
             }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            activityButton
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
+        .onChange(of: model.selectedBucket) { showingActivity = false }
+    }
+
+    private var activityButton: some View {
+        Button {
+            showingActivity.toggle()
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "message")
+                Text("\(model.reviewedToday)")
+                    .monospacedDigit()
+            }
+        }
+        .buttonStyle(.accessoryBar)
+        .foregroundStyle(showingActivity ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+        .help("PRs you reviewed today — click for the last 7 or 30 days")
     }
 
     @ViewBuilder
     private var list: some View {
+        if showingActivity {
+            ReviewActivityPanel(model: model)
+        } else {
+            queueList
+        }
+    }
+
+    @ViewBuilder
+    private var queueList: some View {
         let pullRequests = model.queue[model.selectedBucket]
         if let error = model.lastError, pullRequests.isEmpty {
             emptyState(

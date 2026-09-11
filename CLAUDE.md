@@ -65,3 +65,14 @@ built against an older SDK.
   `PATH`, so `which gh` is not an option.
 - Both searches keep drafts in the result set (no `draft:false`) and bucket them client-side,
   which is what makes the draft tab free. Drafts must never notify.
+- **Do not reach for `contributionsCollection` for the reviewed-today count.** Its
+  `pullRequestReviewContributions` drops everything in private repos with no error — verified
+  2026-09-11, it returned 1 of ~500 reviews and set `hasAnyRestrictedContributions: true`. The
+  working source is a `reviewed-by:` search with each PR's `reviews(author:)` nested in the same
+  document (`ReviewActivityQuery`): 1 rate-limit point per 100-PR page, ~5 pages for a month.
+- The `updated:>=` bound on that search is a superset, not the filter: submitting a review bumps
+  the PR's updated stamp, so nothing inside the window hides behind it, but the results still
+  carry reviews from *before* the window. `ReviewActivityQuery` drops those on `submittedAt`.
+- `scripts/check-review-activity.sh` is the one runnable check in the repo — it links
+  PRBarCore's object files against a throwaway main, since there is no test target. Run it
+  after touching `ReviewActivity`.

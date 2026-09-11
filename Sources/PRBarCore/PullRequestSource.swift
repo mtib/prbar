@@ -11,9 +11,15 @@ public struct ReviewQueueSnapshot: Sendable, Equatable {
 }
 
 /// Where the review queue comes from — the `gh` CLI or api.github.com with a token.
-public protocol PullRequestSource: Sendable {
+public protocol PullRequestSource: GraphQLTransport {
     var describedAuth: String { get }
     func fetchQueue() async throws -> ReviewQueueSnapshot
+}
+
+public extension PullRequestSource {
+    func fetchReviewActivity(user: String, since: Date) async throws -> ReviewActivity {
+        try await ReviewActivityQuery.fetch(from: self, user: user, since: since)
+    }
 }
 
 public enum AuthMode: String, Sendable, CaseIterable, Identifiable, Codable {

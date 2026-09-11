@@ -25,6 +25,20 @@ since they aren't waiting on you yet.
 
 Clicking any row opens the PR in your default browser.
 
+## Reviews you've done
+
+Next to the tabs sits a message chip with the number of **distinct PRs you reviewed today**,
+in your own time zone. Approvals, change requests and plain comments all count the same, and a
+PR you reviewed three times in one day counts once.
+
+Clicking the chip swaps the list for a histogram of the last 7 or 30 days. Clicking it again —
+or picking a tab — goes back.
+
+The numbers come from a `reviewed-by:<you>` search that pulls each PR's own reviews back in the
+same GraphQL round trip, so the timestamps are real submission times and private repos are
+included. The obvious API for this, `contributionsCollection`, is not usable: it silently drops
+every contribution in a private repository.
+
 ## Notifications
 
 - One notification per PR, the first time it appears in **Direct** or **Team**.
