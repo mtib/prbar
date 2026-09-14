@@ -35,10 +35,18 @@ The cask carries a real `version` + `sha256` (not `version :latest`), which is w
 `strategy :github_latest`.
 
 Releases are ad-hoc signed, not notarized, so a downloaded copy is Gatekeeper-rejected while it
-carries a quarantine flag. **The cask clears it in a `postflight` block**, which is what keeps
-`brew install` a single step — a deliberate trade Markus approved after a colleague hit the
+carries a quarantine flag. **The cask clears it in a `postflight_steps` block**, which is what
+keeps `brew install` a single step — a deliberate trade Markus approved after a colleague hit the
 "macOS doesn't trust it" wall. Don't reintroduce manual `xattr` instructions for the brew path;
 they're only relevant to hand-downloaded zips.
+
+`postflight_steps` is a declarative DSL, not Ruby run against the cask: it has no `appdir`
+method, so the path is the literal template token `{{appdir}}/prbar.app` and `#{appdir}`
+interpolation would raise. `run` replaces `system_command`. Verified against Homebrew 7.0.1 —
+`postflight` and `url ... verified:` both deprecated there. Check a template change by rendering
+it into a scratch tap (`brew tap-new mtib/scratch --no-git`, drop the file in `Casks/`, then
+`brew info --cask` + `brew style --cask`); loading is what surfaces deprecations, and a cask
+outside a tap will not load at all.
 
 Homebrew 6 removed the `--no-quarantine` **install flag** (it only survives via
 `HOMEBREW_CASK_OPTS`, and that has no effect once the download is cached), so don't document
