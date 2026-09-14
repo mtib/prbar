@@ -47,9 +47,10 @@ struct PanelView: View {
 
     private var bucketRow: some View {
         HStack(spacing: 8) {
-            Picker("", selection: $model.selectedBucket) {
+            Picker("", selection: bucketSelection) {
                 ForEach(ReviewBucket.allCases) { bucket in
-                    Text("\(bucket.title) (\(model.count(bucket)))").tag(bucket)
+                    Text("\(bucket.title) (\(model.count(bucket)))")
+                        .tag(bucket as ReviewBucket?)
                 }
             }
             .pickerStyle(.segmented)
@@ -59,21 +60,33 @@ struct PanelView: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
-        .onChange(of: model.selectedBucket) { showingActivity = false }
     }
 
+    /// Nil while the histogram is up, so no segment stays lit for a list that isn't on screen.
+    /// A segmented picker highlights whichever tag matches, and `nil` matches none of them.
+    private var bucketSelection: Binding<ReviewBucket?> {
+        Binding(
+            get: { showingActivity ? nil : model.selectedBucket },
+            set: { selected in
+                guard let selected else { return }
+                showingActivity = false
+                model.selectedBucket = selected
+            }
+        )
+    }
+
+    /// A real toggle rather than an `.accessoryBar` button: this sits beside the segmented
+    /// picker as a primary control, and `.accessoryBar` is the muted style used for the chrome
+    /// around it (refresh, Settings, Quit), which left the count barely legible.
     private var activityButton: some View {
-        Button {
-            showingActivity.toggle()
-        } label: {
+        Toggle(isOn: $showingActivity) {
             HStack(spacing: 3) {
                 Image(systemName: "message")
                 Text("\(model.reviewedToday)")
                     .monospacedDigit()
             }
         }
-        .buttonStyle(.accessoryBar)
-        .foregroundStyle(showingActivity ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+        .toggleStyle(.button)
         .help("PRs you reviewed today — click for the last 7 or 30 days")
     }
 
