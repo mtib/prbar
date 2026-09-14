@@ -73,6 +73,9 @@ built against an older SDK.
 - The `updated:>=` bound on that search is a superset, not the filter: submitting a review bumps
   the PR's updated stamp, so nothing inside the window hides behind it, but the results still
   carry reviews from *before* the window. `ReviewActivityQuery` drops those on `submittedAt`.
-- `scripts/check-review-activity.sh` is the one runnable check in the repo — it links
-  PRBarCore's object files against a throwaway main, since there is no test target. Run it
-  after touching `ReviewActivity`.
+- `scripts/check-core.sh` is the one runnable check in the repo — it links PRBarCore's object
+  files against a throwaway main, since there is no test target. Run it after touching
+  `ReviewActivity` or `NotificationPlanner`.
+- Silencing notifications must never build a backlog: `NotificationPlanner` records every
+  notifiable PR as seen even when the mode drops it, so un-muting announces what arrives next
+  instead of replaying the quiet period. Narrow `toNotify`, never `notified`.

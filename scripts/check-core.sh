@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Day-bucketing check for ReviewActivity. There is no test target (CLT ships no XCTest), so
-# this compiles PRBarCore's object files against a throwaway main and asserts on fixed input.
+# Logic checks for PRBarCore (review-activity day bucketing, notification planning). There is
+# no test target (CLT ships no XCTest), so this compiles PRBarCore's object files against a
+# throwaway main and asserts on fixed input.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -23,6 +24,73 @@ import PRBarCore
             print("FAIL \(what): expected \(expected), got \(actual)")
             failures += 1
         }
+    }
+
+    static func pr(_ repo: String, _ number: Int, draft: Bool = false) -> PullRequest {
+        PullRequest(
+            repo: repo,
+            number: number,
+            title: "t",
+            url: URL(string: "https://example.com")!,
+            author: "someone",
+            isDraft: draft,
+            createdAt: .now,
+            updatedAt: .now
+        )
+    }
+
+    static func checkNotificationModes() {
+        let queue = ReviewQueue(
+            direct: [pr("o/a", 1)],
+            team: [pr("o/b", 2)],
+            drafts: [pr("o/c", 3, draft: true)]
+        )
+        let seen: Set<String> = []
+
+        expect(
+            NotificationPlanner.plan(queue: queue, notified: seen, mode: .all).toNotify.count, 2,
+            "all: direct + team notify"
+        )
+        expect(
+            NotificationPlanner.plan(queue: queue, notified: seen, mode: .direct).toNotify.count, 1,
+            "direct: team is silenced"
+        )
+        expect(
+            NotificationPlanner.plan(queue: queue, notified: seen, mode: .off).toNotify.count, 0,
+            "off: nothing notifies"
+        )
+        expect(
+            NotificationPlanner.plan(queue: queue, notified: seen, mode: .direct)
+                .toNotify.first.map { $0.id == "o/a#1" ? 1 : 0 } ?? 0, 1,
+            "direct: the survivor is the direct PR"
+        )
+
+        // Muting must not build up a backlog: everything notifiable is recorded as seen even
+        // while silenced, so lifting the mute announces only what arrives afterwards.
+        let muted = NotificationPlanner.plan(queue: queue, notified: seen, mode: .off)
+        expect(muted.notified.count, 2, "off still records direct + team as seen")
+        expect(
+            NotificationPlanner.plan(queue: queue, notified: muted.notified, mode: .all)
+                .toNotify.count, 0,
+            "un-muting does not replay what was silenced"
+        )
+        expect(
+            muted.notified.contains("o/c#3") ? 1 : 0, 0,
+            "drafts are never recorded as seen"
+        )
+
+        // A mute that lapses mid-poll behaves as `all` from that poll on.
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        expect(
+            MuteDuration.oneHour.expiry(from: start).map {
+                Int($0.timeIntervalSince(start))
+            } ?? -1, 3600,
+            "one hour resolves to a deadline 3600s out"
+        )
+        expect(
+            MuteDuration.never.expiry(from: start) == nil ? 1 : 0, 1,
+            "an open-ended mute has no deadline"
+        )
     }
 
     static func main() {
@@ -73,6 +141,8 @@ import PRBarCore
             activity.distinctPullRequests(on: noon, calendar: auckland), 2,
             "bucketing follows the supplied calendar's time zone"
         )
+
+        checkNotificationModes()
 
         print(failures == 0 ? "\nall checks passed" : "\n\(failures) check(s) failed")
         exit(failures == 0 ? 0 : 1)

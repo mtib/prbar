@@ -41,6 +41,22 @@ every contribution in a private repository.
 
 ## Notifications
 
+Three modes, in Settings or from the bell in the panel footer:
+
+| Mode | What notifies |
+| --- | --- |
+| **All** | Direct and team requests (the default) |
+| **Only direct** | Reviews blocked on you personally; team requests stay silent |
+| **Off** | Nothing — the queue and counts keep updating |
+
+Either quiet mode can carry a timer (30 minutes, 1, 4 or 8 hours) after which it lapses back to
+**All** on the next poll. Leave it on "Until I change it" for an open-ended mute.
+
+Silencing never builds a backlog: PRs that arrive while you're quiet are still recorded as seen,
+so turning notifications back on announces what lands *next* rather than replaying the whole
+quiet period. The footer bell turns orange while muted — a mute you can't see just looks like a
+broken app.
+
 - One notification per PR, the first time it appears in **Direct** or **Team**.
 - Clicking the notification opens the PR.
 - **Drafts never notify.** A draft that flips to ready-for-review notifies at that point.

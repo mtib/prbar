@@ -138,6 +138,40 @@ struct PanelView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// A mute you cannot see is a trap — you would just conclude the app had broken — so the
+    /// footer always carries the current mode, and changing it takes one click.
+    private var notificationMenu: some View {
+        Menu {
+            ForEach(NotificationMode.allCases) { mode in
+                Button {
+                    model.settings.notificationMode = mode
+                } label: {
+                    if mode == model.settings.notificationMode {
+                        Label(mode.title, systemImage: "checkmark")
+                    } else {
+                        Text(mode.title)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: model.settings.notificationMode.symbol)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .foregroundStyle(model.settings.notificationMode.isMuted ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+        .help(muteHelp)
+    }
+
+    private var muteHelp: String {
+        let mode = model.settings.notificationMode
+        guard mode.isMuted else { return "Notifications: \(mode.title)" }
+        guard let expiry = model.settings.muteExpiry else {
+            return "Notifications: \(mode.title) until you change it"
+        }
+        return "Notifications: \(mode.title) until \(expiry.formatted(.dateTime.hour().minute()))"
+    }
+
     private var footer: some View {
         HStack(spacing: 8) {
             Group {
@@ -157,6 +191,8 @@ struct PanelView: View {
             }
 
             Spacer()
+
+            notificationMenu
 
             SettingsLink {
                 Text("Settings…")

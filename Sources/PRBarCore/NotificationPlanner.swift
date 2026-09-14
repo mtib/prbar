@@ -18,7 +18,15 @@ public enum NotificationPlanner {
     /// arrive as a wall of banners. Keys that have left the queue are pruned, so a PR that is
     /// re-requested after being dealt with notifies again, and a draft flipping to ready
     /// notifies for the first time (drafts are never recorded as notified).
-    public static func plan(queue: ReviewQueue, notified: Set<String>?) -> NotifyPlan {
+    ///
+    /// `mode` only ever narrows `toNotify`. A PR silenced by the mode is still recorded as
+    /// notified, so un-muting announces what arrives *next* rather than replaying everything
+    /// that landed while you were quiet — the same reason the first poll seeds silently.
+    public static func plan(
+        queue: ReviewQueue,
+        notified: Set<String>?,
+        mode: NotificationMode = .all
+    ) -> NotifyPlan {
         let present = Set(queue.all.map(\.id))
         let candidates = queue.notifiable
 
@@ -27,8 +35,15 @@ public enum NotificationPlanner {
         }
 
         let fresh = candidates.filter { !notified.contains($0.id) }
+        let directIDs = Set(queue.direct.map(\.id))
+        let audible: [PullRequest] = switch mode {
+        case .off: []
+        case .direct: fresh.filter { directIDs.contains($0.id) }
+        case .all: fresh
+        }
+
         return NotifyPlan(
-            toNotify: fresh,
+            toNotify: audible,
             notified: notified.intersection(present).union(candidates.map(\.id))
         )
     }

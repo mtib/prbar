@@ -73,6 +73,8 @@ final class AppModel {
         isRefreshing = true
         defer { isRefreshing = false }
 
+        settings.expireMuteIfDue()
+
         do {
             let source = try settings.resolveSource()
             let snapshot = try await source.fetchQueue()
@@ -88,7 +90,11 @@ final class AppModel {
     }
 
     private func announce(_ queue: ReviewQueue) async {
-        let plan = NotificationPlanner.plan(queue: queue, notified: notified)
+        let plan = NotificationPlanner.plan(
+            queue: queue,
+            notified: notified,
+            mode: settings.notificationMode
+        )
         for pullRequest in plan.toNotify {
             await notifier.post(pullRequest)
         }

@@ -32,6 +32,30 @@ struct SettingsPane: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Notifications") {
+                Picker("Notify me about", selection: $settings.notificationMode) {
+                    ForEach(NotificationMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                Text(notificationHint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if settings.notificationMode.isMuted {
+                    Picker("Turn back on after", selection: $settings.muteDuration) {
+                        ForEach(MuteDuration.allCases) { duration in
+                            Text(duration.title).tag(duration)
+                        }
+                    }
+                    if let expiry = settings.muteExpiry {
+                        Text("Back to All at \(expiry, format: .dateTime.hour().minute()).")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             Section("Personal access token") {
                 SecureField("ghp_… or github_pat_…", text: $tokenDraft)
                     .onSubmit(save)
@@ -71,6 +95,14 @@ struct SettingsPane: View {
         .formStyle(.grouped)
         .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var notificationHint: String {
+        switch settings.notificationMode {
+        case .off: "Nothing is announced. The queue and counts keep updating."
+        case .direct: "Only reviews blocked on you personally. Team requests stay silent."
+        case .all: "Direct and team requests both notify. Drafts never do."
+        }
     }
 
     private var authHint: String {
