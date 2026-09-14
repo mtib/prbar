@@ -32,6 +32,17 @@ struct SettingsPane: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Refresh") {
+                Picker("Check GitHub", selection: $settings.pollInterval) {
+                    ForEach(PollInterval.allCases) { interval in
+                        Text(interval.title).tag(interval)
+                    }
+                }
+                Text("Polling only runs while the machine has a route to the internet, and the arrow in the panel refreshes on demand.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Notifications") {
                 Picker("Notify me about", selection: $settings.notificationMode) {
                     ForEach(NotificationMode.allCases) { mode in

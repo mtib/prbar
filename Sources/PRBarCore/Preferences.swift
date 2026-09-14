@@ -62,3 +62,34 @@ public enum MuteDuration: String, Sendable, CaseIterable, Codable, Identifiable 
         interval.map { start.addingTimeInterval($0) }
     }
 }
+
+/// How often the queue is re-fetched.
+public enum PollInterval: String, Sendable, CaseIterable, Codable, Identifiable {
+    case oneMinute
+    case fiveMinutes
+    case tenMinutes
+    case thirtyMinutes
+    case hourly
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .oneMinute: "Every minute"
+        case .fiveMinutes: "Every 5 minutes"
+        case .tenMinutes: "Every 10 minutes"
+        case .thirtyMinutes: "Every 30 minutes"
+        case .hourly: "Every hour"
+        }
+    }
+
+    public var seconds: TimeInterval {
+        switch self {
+        case .oneMinute: 60
+        case .fiveMinutes: 5 * 60
+        case .tenMinutes: 10 * 60
+        case .thirtyMinutes: 30 * 60
+        case .hourly: 60 * 60
+        }
+    }
+}

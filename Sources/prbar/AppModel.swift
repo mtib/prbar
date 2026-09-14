@@ -6,7 +6,10 @@ import PRBarCore
 @MainActor
 @Observable
 final class AppModel {
-    static let pollInterval: Duration = .seconds(60)
+    /// The loop wakes on this cadence regardless of the poll interval, so shortening the
+    /// interval takes effect within a tick instead of after the long sleep already in flight,
+    /// and a mute deadline lands on time even when polling hourly.
+    static let tick: Duration = .seconds(5)
     /// The histogram's longest span, so one fetch feeds both the 7- and 30-day views.
     static let activityWindow = 30
 
@@ -54,8 +57,19 @@ final class AppModel {
                 if self?.connectivity.isOnline == true {
                     await self?.performRefresh()
                 }
-                try? await Task.sleep(for: Self.pollInterval)
+                await self?.waitForNextPoll()
             }
+        }
+    }
+
+    /// Sleeps until the chosen interval has elapsed, re-reading it as it goes.
+    private func waitForNextPoll() async {
+        let start = Date.now
+        while !Task.isCancelled {
+            settings.expireMuteIfDue()
+            let remaining = settings.pollInterval.seconds - Date.now.timeIntervalSince(start)
+            guard remaining > 0 else { return }
+            try? await Task.sleep(for: min(Self.tick, .seconds(remaining)))
         }
     }
 

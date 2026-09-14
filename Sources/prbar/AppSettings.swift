@@ -10,6 +10,7 @@ final class AppSettings {
         static let notificationMode = "notificationMode"
         static let muteDuration = "muteDuration"
         static let muteExpiry = "muteExpiry"
+        static let pollInterval = "pollInterval"
     }
 
     private let defaults: UserDefaults
@@ -30,6 +31,10 @@ final class AppSettings {
             defaults.set(notificationMode.rawValue, forKey: Key.notificationMode)
             restartMuteTimer()
         }
+    }
+
+    var pollInterval: PollInterval {
+        didSet { defaults.set(pollInterval.rawValue, forKey: Key.pollInterval) }
     }
 
     var muteDuration: MuteDuration {
@@ -56,6 +61,8 @@ final class AppSettings {
             .flatMap(AuthMode.init(rawValue:)) ?? .automatic
         self.notificationMode = defaults.string(forKey: Key.notificationMode)
             .flatMap(NotificationMode.init(rawValue:)) ?? .all
+        self.pollInterval = defaults.string(forKey: Key.pollInterval)
+            .flatMap(PollInterval.init(rawValue:)) ?? .oneMinute
         self.muteDuration = defaults.string(forKey: Key.muteDuration)
             .flatMap(MuteDuration.init(rawValue:)) ?? .never
         self.muteExpiry = defaults.object(forKey: Key.muteExpiry)

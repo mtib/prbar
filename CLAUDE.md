@@ -84,6 +84,10 @@ built against an older SDK.
 - `scripts/check-core.sh` is the one runnable check in the repo — it links PRBarCore's object
   files against a throwaway main, since there is no test target. Run it after touching
   `ReviewActivity` or `NotificationPlanner`.
+- The poll loop wakes every `AppModel.tick` (5s) and only fetches once the chosen
+  `PollInterval` has elapsed, rather than sleeping for the whole interval. Sleeping the full
+  interval would strand a user who picked hourly and then changed their mind, and would let a
+  30-minute mute run an hour. Keep the tick short and the decision inside the loop.
 - Silencing notifications must never build a backlog: `NotificationPlanner` records every
   notifiable PR as seen even when the mode drops it, so un-muting announces what arrives next
   instead of replaying the quiet period. Narrow `toNotify`, never `notified`.

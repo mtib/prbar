@@ -8,8 +8,9 @@ queue lives in the menu bar, and you get exactly one notification per PR that ne
 
 ## What it shows
 
-Every 60 seconds (only while the machine has a route to the internet) it runs two GitHub
-searches and splits the results into three tabs, each with a live count:
+Every minute by default (only while the machine has a route to the internet) it runs two GitHub
+searches and splits the results into three tabs, each with a live count. Settings offers 1, 5,
+10 or 30 minutes, or hourly:
 
 | Tab | What lands there |
 | --- | --- |
