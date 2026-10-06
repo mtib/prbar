@@ -196,7 +196,7 @@ struct PanelView: View {
             }
 
             if let user = model.user {
-                Text("· \(user)")
+                Text(user)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
