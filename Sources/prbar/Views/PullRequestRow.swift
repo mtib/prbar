@@ -16,7 +16,7 @@ struct PullRequestRow: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.head)
-                    Text("#\(pullRequest.number)")
+                    Text(verbatim: "#\(pullRequest.number)")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.tertiary)
                     Spacer(minLength: 8)
