@@ -6,6 +6,12 @@ The GitHub Slack integration stops scaling once your team is on enough repos: ev
 request becomes a message, and the standing queue is invisible. `prbar` inverts that — the
 queue lives in the menu bar, and you get exactly one notification per PR that newly needs you.
 
+<p align="center">
+  <img src="docs/screenshots/direct.png" width="32%" alt="Direct tab">
+  <img src="docs/screenshots/team.png" width="32%" alt="Team tab">
+  <img src="docs/screenshots/drafts.png" width="32%" alt="Drafts tab">
+</p>
+
 ## What it shows
 
 Every minute by default (only while the machine has a route to the internet) it runs two GitHub
@@ -24,7 +30,8 @@ PRs you authored yourself are filtered out.
 The menu bar itself reads `<direct>+<team>` — drafts are deliberately left out of that total,
 since they aren't waiting on you yet.
 
-Clicking any row opens the PR in your default browser.
+Clicking any row opens the PR in your default browser. Settings → **Sort by** orders the lists
+by recent or least recent activity, or by newest or oldest PR; each row shows the matching age.
 
 ## Reviews you've done
 
@@ -39,6 +46,8 @@ The numbers come from a `reviewed-by:<you>` search that pulls each PR's own revi
 same GraphQL round trip, so the timestamps are real submission times and private repos are
 included. The obvious API for this, `contributionsCollection`, is not usable: it silently drops
 every contribution in a private repository.
+
+<p align="center"><img src="docs/screenshots/history.png" width="45%" alt="Review history"></p>
 
 ## Notifications
 
@@ -108,6 +117,8 @@ xattr -dr com.apple.quarantine /Applications/prbar.app
 around; pass the full path when it matters which copy starts.)
 
 ## Authentication
+
+<p align="center"><img src="docs/screenshots/settings.png" width="40%" alt="Settings"></p>
 
 Two options, selectable in Settings (click the menu bar icon → **Settings…**):
 
