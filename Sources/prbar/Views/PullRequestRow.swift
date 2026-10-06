@@ -11,18 +11,13 @@ struct PullRequestRow: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 2) {
+                Text(pullRequest.title)
+                    .font(.system(size: 12, weight: .medium))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 6) {
-                    Text(pullRequest.title)
-                        .font(.system(size: 12, weight: .medium))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Spacer(minLength: 8)
-                    Text(verbatim: "#\(pullRequest.number)")
+                    Text(verbatim: "\(pullRequest.repo)#\(pullRequest.number)")
                         .font(.caption.monospacedDigit())
-                        .foregroundStyle(.tertiary)
-                }
-                HStack(spacing: 6) {
-                    Text(pullRequest.repo)
                         .lineLimit(1)
                         .truncationMode(.head)
                     Text(pullRequest.author)
