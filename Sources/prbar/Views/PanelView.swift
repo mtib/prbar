@@ -8,7 +8,6 @@ struct PanelView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
             bucketRow
             Divider()
             list
@@ -16,33 +15,6 @@ struct PanelView: View {
             footer
         }
         .frame(width: 420, height: 520)
-    }
-
-    private var header: some View {
-        HStack {
-            Text("Review queue")
-                .font(.headline)
-            if model.isRefreshing {
-                ProgressView()
-                    .controlSize(.small)
-            }
-            Spacer()
-            if !model.isOnline {
-                Label("Offline", systemImage: "wifi.slash")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Button {
-                model.refresh()
-            } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .buttonStyle(.accessoryBar)
-            .help("Refresh now")
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
     }
 
     private var bucketRow: some View {
@@ -57,8 +29,10 @@ struct PanelView: View {
             .labelsHidden()
 
             activityButton
+            refreshButton
         }
         .padding(.horizontal, 12)
+        .padding(.top, 10)
         .padding(.bottom, 8)
     }
 
@@ -88,6 +62,21 @@ struct PanelView: View {
         }
         .toggleStyle(.button)
         .help("PRs you reviewed today — click for the last 7 or 30 days")
+    }
+
+    private var refreshButton: some View {
+        Button {
+            model.refresh()
+        } label: {
+            if model.isRefreshing {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "arrow.clockwise")
+            }
+        }
+        .buttonStyle(.bordered)
+        .help("Refresh now")
     }
 
     @ViewBuilder
@@ -199,6 +188,12 @@ struct PanelView: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+
+            if !model.isOnline {
+                Label("Offline", systemImage: "wifi.slash")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
 
             if let user = model.user {
                 Text("· \(user)")
