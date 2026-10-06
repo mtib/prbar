@@ -60,18 +60,4 @@ public struct GitHubClient: PullRequestSource {
         }
         return Data(try await runner.run(ghPath, arguments: arguments).utf8)
     }
-
-    public func fetchQueue() async throws -> ReviewQueueSnapshot {
-        let user = try await currentUser()
-        async let direct = search(ReviewQuery.direct(user: user))
-        async let requested = search(ReviewQuery.requested(user: user))
-        return ReviewQueueSnapshot(
-            user: user,
-            queue: ReviewQueue.classify(
-                direct: try await direct,
-                requested: try await requested,
-                user: user
-            )
-        )
-    }
 }

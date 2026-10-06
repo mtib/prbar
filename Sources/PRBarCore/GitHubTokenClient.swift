@@ -44,8 +44,8 @@ public struct GitHubTokenClient: PullRequestSource {
         return request
     }
 
-    private func get(_ url: URL) async throws -> (Data, HTTPURLResponse) {
-        let (data, response) = try await session.data(for: request(url))
+    private func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw APIFailure(statusCode: -1, body: "non-HTTP response")
         }
@@ -62,22 +62,12 @@ public struct GitHubTokenClient: PullRequestSource {
         var request = request(Self.apiRoot.appending(path: "graphql"))
         request.httpMethod = "POST"
         request.httpBody = try JSONEncoder().encode(GraphQLRequest(query: document, variables: variables))
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw APIFailure(statusCode: -1, body: "non-HTTP response")
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw APIFailure(
-                statusCode: http.statusCode,
-                body: String(data: data, encoding: .utf8) ?? ""
-            )
-        }
-        return data
+        return try await send(request).0
     }
 
     public func currentUser() async throws -> String {
         struct Me: Decodable { let login: String }
-        let (data, _) = try await get(Self.apiRoot.appending(path: "user"))
+        let (data, _) = try await send(request(Self.apiRoot.appending(path: "user")))
         return try JSONDecoder().decode(Me.self, from: data).login
     }
 
@@ -97,25 +87,11 @@ public struct GitHubTokenClient: PullRequestSource {
 
         for _ in 0..<Self.maxPages {
             guard let url = next else { break }
-            let (data, http) = try await get(url)
+            let (data, http) = try await send(request(url))
             items += try decoder.decode(SearchResponse.self, from: data).items.map(\.pullRequest)
             next = Self.nextPageURL(linkHeader: http.value(forHTTPHeaderField: "Link"))
         }
         return items
-    }
-
-    public func fetchQueue() async throws -> ReviewQueueSnapshot {
-        let user = try await currentUser()
-        async let direct = search(ReviewQuery.direct(user: user))
-        async let requested = search(ReviewQuery.requested(user: user))
-        return ReviewQueueSnapshot(
-            user: user,
-            queue: ReviewQueue.classify(
-                direct: try await direct,
-                requested: try await requested,
-                user: user
-            )
-        )
     }
 
     /// Extracts the `rel="next"` target from an RFC 5988 `Link` header.
