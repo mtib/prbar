@@ -53,7 +53,9 @@ public enum ReviewActivityQuery {
             if let failure = page.errors?.first?.message {
                 throw GraphQLFailure(message: failure)
             }
-            guard let search = page.data?.search else { break }
+            guard let search = page.data?.search else {
+                throw GraphQLFailure(message: "response carried no search data")
+            }
 
             for node in search.nodes {
                 guard let repo = node.repository?.nameWithOwner, let number = node.number else { continue }

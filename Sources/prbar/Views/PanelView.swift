@@ -49,7 +49,7 @@ struct PanelView: View {
         HStack(spacing: 8) {
             Picker("", selection: bucketSelection) {
                 ForEach(ReviewBucket.allCases) { bucket in
-                    Text("\(bucket.title) (\(model.count(bucket)))")
+                    Text("\(bucket.title) (\(model.hasLoadedQueue ? String(model.count(bucket)) : "…"))")
                         .tag(bucket as ReviewBucket?)
                 }
             }
@@ -82,7 +82,7 @@ struct PanelView: View {
         Toggle(isOn: $showingActivity) {
             HStack(spacing: 3) {
                 Image(systemName: "message")
-                Text("\(model.reviewedToday)")
+                Text(model.hasLoadedActivity ? "\(model.reviewedToday)" : "…")
                     .monospacedDigit()
             }
         }
@@ -102,7 +102,10 @@ struct PanelView: View {
     @ViewBuilder
     private var queueList: some View {
         let pullRequests = model.queue[model.selectedBucket]
-        if let error = model.lastError, pullRequests.isEmpty {
+        if !model.hasLoadedQueue, model.lastError == nil {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let error = model.lastError, pullRequests.isEmpty {
             emptyState(
                 symbol: "exclamationmark.triangle",
                 title: "Couldn't reach GitHub",

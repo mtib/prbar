@@ -13,10 +13,27 @@ public struct ReviewQueueSnapshot: Sendable, Equatable {
 /// Where the review queue comes from — the `gh` CLI or api.github.com with a token.
 public protocol PullRequestSource: GraphQLTransport {
     var describedAuth: String { get }
-    func fetchQueue() async throws -> ReviewQueueSnapshot
+    func currentUser() async throws -> String
+    func search(_ query: String) async throws -> [PullRequest]
 }
 
 public extension PullRequestSource {
+    /// Pass `knownUser` to skip the `/user` round trip when the login is already cached.
+    func fetchQueue(knownUser: String? = nil) async throws -> ReviewQueueSnapshot {
+        let user: String
+        if let knownUser { user = knownUser } else { user = try await currentUser() }
+        async let direct = search(ReviewQuery.direct(user: user))
+        async let requested = search(ReviewQuery.requested(user: user))
+        return ReviewQueueSnapshot(
+            user: user,
+            queue: ReviewQueue.classify(
+                direct: try await direct,
+                requested: try await requested,
+                user: user
+            )
+        )
+    }
+
     func fetchReviewActivity(user: String, since: Date) async throws -> ReviewActivity {
         try await ReviewActivityQuery.fetch(from: self, user: user, since: since)
     }

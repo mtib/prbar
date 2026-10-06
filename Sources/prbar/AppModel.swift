@@ -12,6 +12,9 @@ final class AppModel {
     static let tick: Duration = .seconds(5)
     /// The histogram's longest span, so one fetch feeds both the 7- and 30-day views.
     static let activityWindow = 30
+    /// The history changes slowly and costs up to ~5 GraphQL pages, so it refreshes on its own,
+    /// slower cadence; the refresh button and reconnects still force it.
+    static let activityInterval: TimeInterval = 300
 
     var selectedBucket: ReviewBucket = .direct
     private(set) var queue = ReviewQueue.empty
@@ -20,6 +23,8 @@ final class AppModel {
     private(set) var lastRefresh: Date?
     private(set) var lastError: String?
     private(set) var isRefreshing = false
+    private(set) var hasLoadedQueue = false
+    private(set) var hasLoadedActivity = false
 
     let settings: AppSettings
     let connectivity = ConnectivityMonitor()
@@ -29,6 +34,8 @@ final class AppModel {
     private var notified: Set<String>?
     private var pollTask: Task<Void, Never>?
     private var refreshTask: Task<Void, Never>?
+    private var cachedUser: (auth: String, login: String)?
+    private var lastActivityFetch: Date?
 
     init(settings: AppSettings = AppSettings(), stateStore: NotifyStateStore = .inApplicationSupport()) {
         self.settings = settings
@@ -77,12 +84,12 @@ final class AppModel {
     func refresh() {
         guard refreshTask == nil else { return }
         refreshTask = Task { [weak self] in
-            await self?.performRefresh()
+            await self?.performRefresh(force: true)
             self?.refreshTask = nil
         }
     }
 
-    private func performRefresh() async {
+    private func performRefresh(force: Bool = false) async {
         guard !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
@@ -91,13 +98,18 @@ final class AppModel {
 
         do {
             let source = try settings.resolveSource()
-            let snapshot = try await source.fetchQueue()
+            let known = cachedUser?.auth == source.describedAuth ? cachedUser?.login : nil
+            let snapshot = try await source.fetchQueue(knownUser: known)
+            cachedUser = (source.describedAuth, snapshot.user)
             user = snapshot.user
             queue = snapshot.queue
+            hasLoadedQueue = true
             lastRefresh = .now
             lastError = nil
             await announce(snapshot.queue)
-            await refreshActivity(from: source, user: snapshot.user)
+            if force || activityIsDue {
+                await refreshActivity(from: source, user: snapshot.user)
+            }
         } catch {
             lastError = error.localizedDescription
         }
@@ -116,6 +128,11 @@ final class AppModel {
         try? stateStore.save(plan.notified)
     }
 
+    private var activityIsDue: Bool {
+        guard let lastActivityFetch else { return true }
+        return Date.now.timeIntervalSince(lastActivityFetch) >= Self.activityInterval
+    }
+
     /// Review history is cosmetic: a failure here must not blank the queue or raise an error
     /// banner, so it is fetched after the queue and swallowed.
     private func refreshActivity(from source: any PullRequestSource, user: String) async {
@@ -125,6 +142,8 @@ final class AppModel {
         ) else { return }
         if let activity = try? await source.fetchReviewActivity(user: user, since: since) {
             reviewActivity = activity
+            hasLoadedActivity = true
+            lastActivityFetch = .now
         }
     }
 

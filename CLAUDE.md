@@ -94,3 +94,11 @@ built against an older SDK.
 - Silencing notifications must never build a backlog: `NotificationPlanner` records every
   notifiable PR as seen even when the mode drops it, so un-muting announces what arrives next
   instead of replaying the quiet period. Narrow `toNotify`, never `notified`.
+- `FileHandle(forWritingTo:)` does not close its descriptor on dealloc — `ProcessRunner` closes
+  both handles explicitly. Leaking two per spawn hit the 256-fd soft limit within an hour of
+  polling (measured: 600 fds after 300 calls).
+- The login is cached per `describedAuth` and the 30-day review history refreshes every
+  `AppModel.activityInterval` (5 min); only the refresh button and reconnects force it. The
+  search API sends no `ETag` (`Cache-Control: no-cache`), so conditional requests don't help.
+- Counts show `…` until the first successful load rather than a false `0`; later refreshes keep
+  the previous data on screen and swap it only on success.

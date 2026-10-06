@@ -28,7 +28,7 @@ private struct MenuBarLabel: View {
     var body: some View {
         HStack(spacing: 3) {
             Image(systemName: "arrow.triangle.pull")
-            Text("\(model.count(.direct))+\(model.count(.team))")
+            Text(model.hasLoadedQueue ? "\(model.count(.direct))+\(model.count(.team))" : "…")
                 .monospacedDigit()
         }
         .task { model.start() }
