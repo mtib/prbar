@@ -19,6 +19,9 @@ There is no Xcode on the dev machine — only Command Line Tools. Consequences:
 VERSION=0.1.0 ./scripts/build-app.sh && open build/prbar.app
 ```
 
+The app icon is `Resources/AppIcon.svg`; `scripts/make-icon.sh` renders the committed
+`Resources/AppIcon.icns` from it (rsvg-convert + iconutil). Re-run it after editing the SVG.
+
 ## Release
 
 Push a `v*` tag. `.github/workflows/release.yml` builds on `macos-26`, packages with `ditto`
