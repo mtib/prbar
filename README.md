@@ -1,4 +1,7 @@
-# <img src="docs/icon.png" width="40" height="40" align="center" alt=""> prbar
+<h1 align="center">
+  <img src="docs/icon.png" width="128" height="128" alt=""><br>
+  prbar
+</h1>
 
 A macOS menu bar app for the GitHub pull requests waiting on your review.
 
