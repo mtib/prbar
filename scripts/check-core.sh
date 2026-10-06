@@ -93,6 +93,26 @@ import PRBarCore
         )
     }
 
+    static func checkSort() {
+        let base = Date(timeIntervalSinceReferenceDate: 0)
+        func item(_ n: Int, created: Double, updated: Double) -> PullRequest {
+            PullRequest(
+                repo: "o/a", number: n, title: "t", url: URL(string: "https://example.com")!,
+                author: "x", isDraft: false,
+                createdAt: base.addingTimeInterval(created),
+                updatedAt: base.addingTimeInterval(updated)
+            )
+        }
+        let list = [item(1, created: 10, updated: 30), item(2, created: 20, updated: 10), item(3, created: 30, updated: 20)]
+        func order(_ sort: QueueSort) -> String {
+            sort.sorted(list).map { String($0.number) }.joined()
+        }
+        expect(order(.recentlyUpdated) == "132" ? 1 : 0, 1, "recently updated: 1,3,2")
+        expect(order(.leastRecentlyUpdated) == "231" ? 1 : 0, 1, "least recently updated: 2,3,1")
+        expect(order(.newest) == "321" ? 1 : 0, 1, "newest: 3,2,1")
+        expect(order(.oldest) == "123" ? 1 : 0, 1, "oldest: 1,2,3")
+    }
+
     static func main() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/Copenhagen")!
@@ -143,6 +163,7 @@ import PRBarCore
         )
 
         checkNotificationModes()
+        checkSort()
 
         print(failures == 0 ? "\nall checks passed" : "\n\(failures) check(s) failed")
         exit(failures == 0 ? 0 : 1)

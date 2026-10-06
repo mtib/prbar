@@ -101,7 +101,7 @@ struct PanelView: View {
 
     @ViewBuilder
     private var queueList: some View {
-        let pullRequests = model.queue[model.selectedBucket]
+        let pullRequests = model.settings.sort.sorted(model.queue[model.selectedBucket])
         if !model.hasLoadedQueue, model.lastError == nil {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -121,7 +121,7 @@ struct PanelView: View {
             ScrollView {
                 LazyVStack(spacing: 2) {
                     ForEach(pullRequests) { pullRequest in
-                        PullRequestRow(pullRequest: pullRequest) { model.open(pullRequest) }
+                        PullRequestRow(pullRequest: pullRequest, age: model.settings.sort.date(of: pullRequest)) { model.open(pullRequest) }
                     }
                 }
                 .padding(.horizontal, 6)

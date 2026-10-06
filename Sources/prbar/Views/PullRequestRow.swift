@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PullRequestRow: View {
     let pullRequest: PullRequest
+    let age: Date
     let action: () -> Void
 
     @State private var isHovered = false
@@ -27,7 +28,7 @@ struct PullRequestRow: View {
                     Text(pullRequest.author)
                         .lineLimit(1)
                     Spacer(minLength: 8)
-                    Text(pullRequest.updatedAt, format: .relative(presentation: .numeric))
+                    Text(age, format: .relative(presentation: .numeric))
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }

@@ -11,6 +11,8 @@ final class AppSettings {
         static let muteDuration = "muteDuration"
         static let muteExpiry = "muteExpiry"
         static let pollInterval = "pollInterval"
+        static let sort = "sort"
+        static let showMockData = "showMockData"
     }
 
     private let defaults: UserDefaults
@@ -35,6 +37,14 @@ final class AppSettings {
 
     var pollInterval: PollInterval {
         didSet { defaults.set(pollInterval.rawValue, forKey: Key.pollInterval) }
+    }
+
+    var showMockData: Bool {
+        didSet { defaults.set(showMockData, forKey: Key.showMockData) }
+    }
+
+    var sort: QueueSort {
+        didSet { defaults.set(sort.rawValue, forKey: Key.sort) }
     }
 
     var muteDuration: MuteDuration {
@@ -63,6 +73,9 @@ final class AppSettings {
             .flatMap(NotificationMode.init(rawValue:)) ?? .all
         self.pollInterval = defaults.string(forKey: Key.pollInterval)
             .flatMap(PollInterval.init(rawValue:)) ?? .oneMinute
+        self.showMockData = defaults.bool(forKey: Key.showMockData)
+        self.sort = defaults.string(forKey: Key.sort)
+            .flatMap(QueueSort.init(rawValue:)) ?? .recentlyUpdated
         self.muteDuration = defaults.string(forKey: Key.muteDuration)
             .flatMap(MuteDuration.init(rawValue:)) ?? .never
         self.muteExpiry = defaults.object(forKey: Key.muteExpiry)

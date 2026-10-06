@@ -102,3 +102,7 @@ built against an older SDK.
   search API sends no `ETag` (`Cache-Control: no-cache`), so conditional requests don't help.
 - Counts show `…` until the first successful load rather than a false `0`; later refreshes keep
   the previous data on screen and swap it only on success.
+- Sorting is applied at display time (`QueueSort.sorted` in `PanelView`), not in `classify`, so
+  changing the setting reorders instantly without a refetch. Rows show the age matching the sort.
+- "Show mock data" (`MockData`) short-circuits `performRefresh` before any network call or
+  notification planning, and never touches `notified`; it exists for README screenshots.

@@ -96,6 +96,11 @@ final class AppModel {
 
         settings.expireMuteIfDue()
 
+        if settings.showMockData {
+            showMock()
+            return
+        }
+
         do {
             let source = try settings.resolveSource()
             let known = cachedUser?.auth == source.describedAuth ? cachedUser?.login : nil
@@ -126,6 +131,17 @@ final class AppModel {
         }
         notified = plan.notified
         try? stateStore.save(plan.notified)
+    }
+
+    /// Never touches `notified`, so switching back to real data announces nothing spurious.
+    private func showMock() {
+        user = MockData.user
+        queue = MockData.queue()
+        reviewActivity = MockData.activity()
+        hasLoadedQueue = true
+        hasLoadedActivity = true
+        lastRefresh = .now
+        lastError = nil
     }
 
     private var activityIsDue: Bool {

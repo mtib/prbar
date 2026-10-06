@@ -43,6 +43,17 @@ struct SettingsPane: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("List") {
+                Picker("Sort by", selection: $settings.sort) {
+                    ForEach(QueueSort.allCases) { sort in
+                        Text(sort.title).tag(sort)
+                    }
+                }
+                Text("Newest and Oldest go by when the PR was opened; the other two by its last activity. Rows show the matching age.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Notifications") {
                 Picker("Notify me about", selection: $settings.notificationMode) {
                     ForEach(NotificationMode.allCases) { mode in
@@ -81,6 +92,14 @@ struct SettingsPane: View {
                 Text(settings.hasToken
                     ? "A token is saved in your Keychain. Needs scopes: \(GitHubTokenClient.requiredScopes)."
                     : "No token saved. Needs scopes: \(GitHubTokenClient.requiredScopes).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Screenshots") {
+                Toggle("Show mock data", isOn: $settings.showMockData)
+                    .onChange(of: settings.showMockData) { model.refresh() }
+                Text("Replaces the queue and review history with made-up pull requests and silences notifications. Nothing is fetched from GitHub while this is on.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

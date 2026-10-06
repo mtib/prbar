@@ -93,3 +93,41 @@ public enum PollInterval: String, Sendable, CaseIterable, Codable, Identifiable 
         }
     }
 }
+
+/// Order of the PR lists, worded like GitHub's own sort menu.
+public enum QueueSort: String, Sendable, CaseIterable, Codable, Identifiable {
+    case recentlyUpdated
+    case leastRecentlyUpdated
+    case newest
+    case oldest
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .recentlyUpdated: "Recently updated"
+        case .leastRecentlyUpdated: "Least recently updated"
+        case .newest: "Newest"
+        case .oldest: "Oldest"
+        }
+    }
+
+    /// The timestamp this order is based on, which is also the age a row should show.
+    public func date(of pullRequest: PullRequest) -> Date {
+        switch self {
+        case .recentlyUpdated, .leastRecentlyUpdated: pullRequest.updatedAt
+        case .newest, .oldest: pullRequest.createdAt
+        }
+    }
+
+    public func sorted(_ pullRequests: [PullRequest]) -> [PullRequest] {
+        let newestFirst: Bool = switch self {
+        case .recentlyUpdated, .newest: true
+        case .leastRecentlyUpdated, .oldest: false
+        }
+        return pullRequests.sorted {
+            let (a, b) = (date(of: $0), date(of: $1))
+            return a == b ? $0.id < $1.id : (newestFirst ? a > b : a < b)
+        }
+    }
+}
